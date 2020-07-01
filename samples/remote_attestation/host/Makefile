@@ -16,8 +16,8 @@ build:
 		--search-path $(INCDIR) \
 		--search-path $(INCDIR)/openenclave/edl/sgx
 	$(CC) -g -c $(CFLAGS) $(CINCLUDES) remoteattestation_u.c
-	$(CXX) -g -c $(CXXFLAGS) $(INCLUDES) host.cpp
-	$(CXX) -o attestation_host host.o remoteattestation_u.o $(LDFLAGS)
+	$(CXX) -g -c $(CXXFLAGS) $(INCLUDES) -I/opt/openenclave/share/pkgconfig/../../include/openenclave/3rdparty/libcxx -I/opt/openenclave/share/pkgconfig/../../include/openenclave/3rdparty/libc -I/opt/openenclave/share/pkgconfig/../../include/openenclave/3rdparty -I/opt/openenclave/share/pkgconfig/../../include host.cpp
+	$(CXX) -o attestation_host host.o remoteattestation_u.o $(LDFLAGS) -L/opt/openenclave/share/pkgconfig/../../lib/openenclave/enclave -lmbedtls -lmbedcrypto
 
 clean:
 	rm -f attestation_host *.o remoteattestation_u.*  remoteattestation_args.h

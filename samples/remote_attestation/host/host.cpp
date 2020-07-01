@@ -5,6 +5,78 @@
 #include <stdio.h>
 #include "remoteattestation_u.h"
 
+#include <mbedtls/base64.h>
+#include <memory.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+int encode_base64(const uint8_t* in, size_t in_len, char** out, size_t* out_len)
+{
+    int ret;
+    size_t bytes_written = 0;
+    ret = mbedtls_base64_encode(NULL, 0, &bytes_written, in, in_len);
+    if (ret != MBEDTLS_ERR_BASE64_BUFFER_TOO_SMALL)
+    {
+        return -1;
+    }
+    *out = static_cast<char*>(malloc(bytes_written));
+    if (*out == NULL)
+    {
+        return -1;
+    }
+    ret = mbedtls_base64_encode(
+        reinterpret_cast<unsigned char*>(*out),
+        bytes_written,
+        out_len,
+        in,
+        in_len);
+    if (ret != 0)
+    {
+        free(*out);
+        *out = 0;
+        *out_len = 0;
+        return -1;
+    }
+
+    return 0;
+}
+
+int encode_base64url(
+    const uint8_t* in,
+    size_t in_len,
+    char** out,
+    size_t* out_len)
+{
+    int ret = encode_base64(in, in_len, out, out_len);
+    if (ret != 0)
+    {
+        return -1;
+    }
+    if (*out && *out_len)
+    {
+        int i = 0;
+        while (i != *out_len)
+        {
+            if ((*out)[i] == '+')
+            {
+                (*out)[i] = '-';
+            }
+            else if ((*out)[i] == '/')
+            {
+                (*out)[i] = '_';
+            }
+            i++;
+        }
+
+        while (*out_len && ((*out)[(*out_len) - 1]) == '=')
+        {
+            (*out_len)--;
+            (*out)[*out_len] = '\0';
+        }
+    }
+    return 0;
+}
+
 oe_enclave_t* create_enclave(const char* enclave_path)
 {
     oe_enclave_t* enclave = NULL;
@@ -50,6 +122,12 @@ int main(int argc, const char* argv[])
     uint8_t* remote_report = NULL;
     size_t remote_report_size = 0;
 
+    char* report_base64 = NULL;
+    size_t report_base64_size = 0;
+
+    char* pem_key_base64 = NULL;
+    size_t pem_key_base64_size = 0;
+
     /* Check argument count */
     if (argc != 3)
     {
@@ -88,6 +166,24 @@ int main(int argc, const char* argv[])
         goto exit;
     }
     printf("Host: 1st enclave's public key: \n%s", pem_key);
+
+    ret = encode_base64url(
+        remote_report, remote_report_size, &report_base64, &report_base64_size);
+    if (ret != 0)
+    {
+        fprintf(stderr, "Failed to base64url report\n");
+        goto exit;
+    }
+    printf("Report in base64: \n%s\n", report_base64);
+
+    ret = encode_base64url(
+        pem_key, pem_key_size, &pem_key_base64, &pem_key_base64_size);
+    if (ret != 0)
+    {
+        fprintf(stderr, "Failed to base64url pem key\n");
+        goto exit;
+    }
+    printf("pem key in base64: \n%s\n", pem_key_base64);
 
     printf("Host: requesting 2nd enclave to attest 1st enclave's the remote "
            "report and the public key\n");
