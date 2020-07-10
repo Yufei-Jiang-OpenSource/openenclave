@@ -174,6 +174,7 @@ int main(int argc, const char* argv[])
         fprintf(stderr, "Failed to base64url report\n");
         goto exit;
     }
+    printf("Report in its original format: \n%s\n", remote_report);
     printf("Report in base64: \n%s\n", report_base64);
 
     ret = encode_base64url(
