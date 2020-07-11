@@ -1,0 +1,48 @@
+/*++
+
+Copyright (c) Microsoft Corporation
+
+Abstract:
+
+    IGVM Agent RPC Interface Definition File.
+
+--*/
+
+//
+// RPC server endpoint for IGVM Agent
+//
+cpp_quote("static WCHAR IGVM_AGENT_RPC_ENDPOINT[] = L\"IGVM_AGENT_RPC_SERVER\";")
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+    uuid(4f92949d-e1b6-468d-b6ba-731b591edccf),
+    version(1.0),
+    pointer_default(unique)
+]
+interface IGVmAgentRpcApi
+{
+    HRESULT
+        RpcIGVmAttest(
+            [in]    handle_t                    BindingHandle,
+            [in]    GUID                        VmId,
+            [in, range(0, 512)]
+    UINT32                      KeyURISize,
+        [in, ref, size_is(KeyURISize)]
+    BYTE* KeyURI,
+        [in, range(0, 512)]
+    UINT32                      AttestationURISize,
+        [in, ref, size_is(KeyURISize)]
+    BYTE* AttestationURI,
+        [in, range(0, 4096)]
+    UINT32                      ReportSize,
+        [in, ref, size_is(ReportSize)]
+    BYTE* Report,
+        [in, range(0, 4096)]
+    UINT32                      ResponseBufferSize,
+        [out]   UINT32* ResponseWrittenSize,
+        [out, ref, size_is(ResponseBufferSize), length_is(*ResponseWrittenSize)]
+    BYTE* Response
+        );
+}

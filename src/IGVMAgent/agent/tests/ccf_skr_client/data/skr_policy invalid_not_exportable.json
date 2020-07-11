@@ -1,0 +1,11 @@
+{
+    "kty": "AES256", 
+    "key_size": 256, 
+    "key_ops": [],
+    "attributes": {"exportable": false}, 
+    "release_policy": {
+        "AAS_ADDR": {
+            "sgx_mrsigner": "abcd123"
+        }
+    }
+}
