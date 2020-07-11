@@ -1,0 +1,7 @@
+[
+    type_strict_context_handle
+]
+
+interface IGVmAgentRpcApi
+{
+}
