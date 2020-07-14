@@ -9,7 +9,7 @@ environment:
     source_mode: 'map'
 
 signing_options:
-  profile: 'azure'
+  profile: 'internal_azure_service'
   codesign_validation_glob_pattern: 'regex|.+(?:dll|exe|sys|ps1|psm1|ps1xml|psc1|psd1|cdxml|vbs|js|wsf)$;-:file|**\linux\**' #CSV does not currently support binaries built for linux, so we exclude this folder
 
 
@@ -28,7 +28,8 @@ build:
         - from: 'src\IGVMAgent\Release\agent'
           to: 'Windows_IGVMAgent'
           include:
-            - '**/*'
+            - '**/*.exe'
+            - '**/*.dll'
           signing_options:
             sign_inline: true
 
@@ -69,3 +70,15 @@ static_analysis_options:
   moderncop_options:
     files_to_scan:
       - from: 'src\IGVMAgent'
+
+package:
+  commands:
+    - !!buildcommand
+      name: 'Package The Binaries'
+      command: 'src\IGVMAgent\package.cmd'
+      artifacts:
+        - from: 'src\IGVMAgent\Release\agent'
+          to: 'Windows_IGVMAgent'
+          include:
+            - '**/*.exe'
+            - '**/*.dll'
