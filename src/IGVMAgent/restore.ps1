@@ -1,5 +1,5 @@
-pushd ../vcpkg
+pushd "%~dp0..src/vcpkg"
 ./bootstrap-vcpkg.bat
 ./vcpkg.exe integrate install
 popd
-../vcpkg/vcpkg.exe install @vcpkg-windows.txt
+%~dp0..src/vcpkg/vcpkg.exe install @vcpkg-windows.txt
