@@ -1,10 +1,6 @@
-echo "Building IGVMAgent dependencies. %~dp0..\src"
-vsdevcmd.bat
-rmdir /s /q release
-mkdir release
-pushd release
-cmake .. -GNinja -DCMAKE_TOOLCHAIN_FILE=%~dp0..\src\vcpkg\scripts\buildsystems\vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
-ninja
-popd
+@echo off
 
-echo "Successfully built IGVMAgent"
+pushd "%~dp0"
+cmake_build.cmd Debug
+cmake_build.cmd Release
+popd

@@ -16,9 +16,6 @@ signing_options:
 restore:
   commands:
     - !!defaultcommand
-      name: 'Restore submodules'
-      command: '.pipelines/restore_submodules.cmd'
-    - !!defaultcommand
       name: 'IGVMAgent Restore'
       command: 'src/IGVMAgent/restore.cmd'
 
