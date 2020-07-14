@@ -2,7 +2,7 @@ version:
   major: 1
   minor: 0
   tag: 'alpha'
-  name: 'CDPX-Samples'
+  name: 'ACC-CVM-IgvmAgent'
   system: 'patch'
 
 workspace_options:
@@ -11,16 +11,16 @@ workspace_options:
 static_analysis_options:
   moderncop_options:
     files_to_scan:
-      - from: src\LinuxSample\Node
+      - from: src\IgvmAgent
         exclude:
-          - '**/*.js'
-      - from: src\WindowsServerSample\Node
-        exclude:
-          - '**/*.js'
+          - '**/*.acf'
+          - '**/*.txt'
+          - '**/*.idl'
+          - '**/*.config'
+          - '**/*.json'
   binskim_options:
     files_to_scan:
-      - exclude:
-          - '**/Go/*.exe'
+      - from: src\IgvmAgent
 
 package_sources:
   nuget:
