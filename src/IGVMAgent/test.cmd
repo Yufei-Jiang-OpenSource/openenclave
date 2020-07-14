@@ -5,7 +5,10 @@ call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Too
 
 echo "Running IGVMAgent tests"
 pushd "%~dp0"
-pushd release
+pushd Debug
+call "ctest" || exit \b 1
+popd
+pushd Release
 call "ctest" || exit \b 1
 popd
 popd

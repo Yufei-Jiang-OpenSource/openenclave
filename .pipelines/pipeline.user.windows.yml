@@ -25,7 +25,7 @@ build:
       name: 'Build IGVMAgent'
       command: 'src\IGVMAgent\build.cmd'
       artifacts:
-        - from: 'src\IGVMAgent\release\agent'
+        - from: 'src\IGVMAgent\Release\agent'
           to: 'Windows_IGVMAgent'
           include:
             - '**/*'
@@ -37,19 +37,19 @@ test:
     - !!testcommand
       name: 'Test IGVMAgent'
       command: 'src\IGVMAgent\test.cmd'
-      fail_on_stderr: false
+      fail_on_stderr: true
       logs:
         - to: 'test-igvmagent-logs'
           include:
-            - '**/*.trx'
-            - '**/*.coverage'
+            - '**/*.log'
+            - '**/*.txt'
       testresults:
-        - from: 'src\IGVMAgent\release\tests'
+        - from: 'src\IGVMAgent\Release\Testing'
           title: 'IGVMAgent-tests'
           type: 'VSTest'
           include:
-            - '**/*.trx'
-            - '**/*.coverage'
+            - '**/*.log'
+            - '**/*.txt'
 
 static_analysis_options:
   policheck_options:
