@@ -257,27 +257,29 @@ typedef struct _IGVM_REQUEST_DATA
     UINT32 KeyDataSize;
 
     // Data holds EkPub or Transport Key.
-    UINT8 KeyData[ANYSIZE_ARRAY];
+    UINT8 KeyData[];
 } IGVM_REQUEST_DATA;
 
+#define ATTESTATION_MAGIC 0x414C4348 // HCLA
+#define ATTESTATION_VERSION (1)
 
-#if defined (_HCL_VSM)
-#define IGVM_REPORT_DATA_LENGTH (VBS_VM_REPORT_DATA_LENGTH)
-#define IGVM_REPORT_TYPE (VbsVmReport)
-#elif defined (_HCL_SEV)
-#define IGVM_REPORT_DATA_LENGTH (SNP_REPORT_DATA_LENGTH)
-#define IGVM_REPORT_TYPE (SnpVmReport)
-#else
-#define IGVM_REPORT_DATA_LENGTH (64)
-#define IGVM_REPORT_TYPE (InvalidReport)
-#endif
-
+//
+// Unmeasured data used to provide transport sanity and versioning.
+//
+typedef struct _ATTESTATION_HEADER
+{
+    UINT32 Magic;
+    UINT32 Version;
+    UINT32 ReportSize;
+    UINT32 Reserved;
+} ATTESTATION_HEADER;
 
 //
 // Attestation report delivered to host attestation agent.
 //
 typedef struct _ATTESTATION_REPORT
 {
+    ATTESTATION_HEADER Header; // Not measured
     HW_ATTESTATION HwReport; // Signed report
     IGVM_REQUEST_DATA HclData; // HCL sourced data
 } ATTESTATION_REPORT;
@@ -303,7 +305,7 @@ typedef struct _IGVM_KEY_MESSAGE_HEADER
     UINT32 EncryptedTransportKeyLength;
     UINT32 EncryptedKeyArrayOffset;
     UINT32 EncryptedKeyArrayLength;
-    UINT8 Payload[ANYSIZE_ARRAY];
+    UINT8 Payload[];
 } IGVM_KEY_MESSAGE_HEADER;
 
 
@@ -322,7 +324,7 @@ typedef struct _IGVM_CERT_MESSAGE_HEADER
     UINT32 SubjectCertLength;
     UINT32 CaCertOffset;
     UINT32 CaCertLength;
-    UINT8 Payload[ANYSIZE_ARRAY];
+    UINT8 Payload[];
 
 } IGVM_CERT_MESSAGE_HEADER;
 
@@ -331,4 +333,3 @@ typedef struct _IGVM_CERT_MESSAGE_HEADER
 #ifdef __cplusplus
 }
 #endif
-

@@ -14,6 +14,7 @@ Abstract:
 
 #include "pch.h"
 #include <include\clients\ccf_skr_client.h>
+#include <iomanip>
 
 using namespace web::http;
 using namespace web::http::client;
@@ -301,14 +302,13 @@ Return Value:
 --*/
 {
     LOG_STRING(L"Key release request received.");
+    LOG_INFO(L"The report type is %d", ((ATTESTATION_REPORT*)Report)->HclData.ReportType);
 
-//    TODO: Have to temporarily comment the predicate below out as current HclData doesn't contain a valid report type.
-//          Will add the predicate below back when a valid report type is available in the HclData.
-//    if (((ATTESTATION_REPORT*)Report)->HclData.ReportType == SnpVmReport)
-//    {
+    if (((ATTESTATION_REPORT*)Report)->HclData.ReportType == SnpVmReport)
+    {
         LOG_INFO(L"ReportType is SnpVmReport");
         RETURN_IF_FAILED(SnpIGVmKeyReleaseRequest(Report, ReportSize, AttestationURI, AttestationURISize, ResponseBuffer, WrittenSize));
-//    }
+    }
 
     return S_OK;
 }
@@ -351,14 +351,14 @@ Return Value:
     LOG_STRING(L"Snp Key release request received.");
 
     snpReport = (SNP_VM_REPORT*)Report;
-    printf("SnpVersion 0x%x\n", snpReport->SnpVersion);
-    printf("SnpGuestSvn 0x%x\n", snpReport->SnpGuestSvn);
-    printf("SnpPolicy 0x%llx\n", snpReport->SnpPolicy);
-    printf("SnpVMPL 0x%x\n", snpReport->SnpVMPL);
-    printf("SnpSignatureAlgo 0x%x\n", snpReport->SnpSignatureAlgo);
-    printf("SnpTcbVersion 0x%llx\n", snpReport->SnpTcbVersion);
-    printf("SnpPlatformInfo 0x%llx\n", snpReport->SnpPlatformInfo);
-    printf("SnpReportFlags 0x%x\n", snpReport->SnpReportFlags);
+    LOG_INFO(L"SnpVersion 0x%x", snpReport->SnpVersion);
+    LOG_INFO(L"SnpGuestSvn 0x%x", snpReport->SnpGuestSvn);
+    LOG_INFO(L"SnpPolicy 0x%llx", snpReport->SnpPolicy);
+    LOG_INFO(L"SnpVMPL 0x%x", snpReport->SnpVMPL);
+    LOG_INFO(L"SnpSignatureAlgo 0x%x", snpReport->SnpSignatureAlgo);
+    LOG_INFO(L"SnpTcbVersion 0x%llx", snpReport->SnpTcbVersion);
+    LOG_INFO(L"SnpPlatformInfo 0x%llx", snpReport->SnpPlatformInfo);
+    LOG_INFO(L"SnpReportFlags 0x%x", snpReport->SnpReportFlags);
 
     RETURN_IF_FAILED(ParseReport(Report, ReportSize, (BYTE*&)userData, userDataBufferSize));
 
@@ -383,29 +383,32 @@ Return Value:
 
     // Get the MAA token based on hwReport and userData.
     maa_token = maaClientInstance.GetMAAToken(hwReportBase64, userDataBase64).get();
-    LOG_INFO(L"MAA token: \n%ws\n", maa_token.c_str());
+    LOG_INFO(L"MAA token: \n%ws", maa_token.c_str());
 
+    LOG_INFO(L"Key data size in HCL data: \n%d", ((ATTESTATION_REPORT*)Report)->HclData.KeyDataSize);
     UINT32 keyDataSize = ((ATTESTATION_REPORT*)Report)->HclData.KeyDataSize;
     UINT8* keyData = ((ATTESTATION_REPORT*)Report)->HclData.KeyData;
-    LOG_INFO(L"Key data size in HCL data: \n%d\n", keyDataSize);
-    LOG_INFO(L"Key data in HCL data:\n");
+    utility::ostringstream_t keyDataStream;
+    keyDataStream << std::hex;
     for (UINT32 i = 0; i < keyDataSize; i++) {
-        LOG_INFO("%02x ", keyData[i]);
+        keyDataStream << std::setfill(L'0') << std::setw(2) << (int)keyData[i] << ' ';
     }
-    LOG_INFO(L"\n");
+    LOG_INFO(L"Key data in HCL data: \n%ws", keyDataStream.str().c_str());
 
     ((ATTESTATION_REPORT*)Report)->HclData.KeyData;
     clients::ccf_skr_client ccfSkrClientInstance(m_igvmIdentity);
     // TODO: Temporarily override the maa_token with the hardcoded value that can be accepted by ccf server.
     maa_token = L"eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6IkN0VHVoTUptRDVNN0RMZHpEMnYyeDNRS1NSWSIsImtpZCI6IkN0VHVoTUptRDVNN0RMZHpEMnYyeDNRS1NSWSJ9.eyJhdWQiOiJodHRwczovL3ZhdWx0LmF6dXJlLm5ldCIsImlzcyI6Imh0dHBzOi8vc3RzLndpbmRvd3MubmV0LzcyZjk4OGJmLTg2ZjEtNDFhZi05MWFiLTJkN2NkMDExZGI0Ny8iLCJpYXQiOjE1ODgwMjg4MzQsIm5iZiI6MTU4ODAyODgzNCwiZXhwIjoxNTg4MTE1NTM0LCJhaW8iOiI0MmRnWUhqanhaZWQrYWJBLzdsUVVoNXZpZXdjQUE9PSIsImFwcGlkIjoiNzZjMzA3YzYtOWMwMS00NDk3LTg5MTEtMzRkNDFlZjE2YTM1IiwiYXBwaWRhY3IiOiIxIiwiaWRwIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3LyIsIm9pZCI6ImUzMDQ1YmJmLWIyNDMtNDhmOC1hNDA2LWMwZWUwMTcwOGQwMCIsInJoIjoiMC5BUm9BdjRqNWN2R0dyMEdScXkxODBCSGJSOFlIdzNZQm5KZEVpUkUwMUI3eGFqVWFBQUEuIiwic3ViIjoiZTMwNDViYmYtYjI0My00OGY4LWE0MDYtYzBlZTAxNzA4ZDAwIiwidGlkIjoiNzJmOTg4YmYtODZmMS00MWFmLTkxYWItMmQ3Y2QwMTFkYjQ3IiwidXRpIjoiWjhzbEFGaS1HMGFmVG54c2Z0TnlBQSIsInZlciI6IjEuMCJ9.VJW1gy4I3ztpngGgTYmR1Y6oxoV5Tgc_MbVpGmZaH5FW2jljGgasF8wSWLwSex0PmWTdJJ7eq3-JCblrL0bTJOkKspTLayDZFKs81kuh6UQxxnR0xvzKvMGfLuYmzi33LCYtAgf_ApVtUGGQjCIrI-_REu__Eu1CJiArClOwZqiTQGn6-Yf4C7RywWcvCvdc5viPh1Y1awTa-6n9AyeP82qnvq5J7vKZXaUJLDZYTG7gLQbg7xyXsUevvGJcpxSU9kk0ViXNTREtPHc-O5ahrYIkbUVNUBb4tgNcwLJoz5rN0YV_MMKZpNqpRUSMR7kOOelsk3eFEeRW0rrQDUXKrA";
-    auto ccfKey = ccfSkrClientInstance.release_key(U("hardcoded_key_for_test_0"), U("3"), maa_token, U("secret_0")).get();
-    LOG_INFO(L"ccf-released key size: \n%d\n", ccfKey.size());
-    LOG_INFO(L"ccf-released key:\n");
+    auto ccfKey = ccfSkrClientInstance.release_key(U("hardcoded_key_for_test_0"), U("12"), maa_token, U("secret_0")).get();
+
+    LOG_INFO(L"ccf-released key size: \n%d", ccfKey.size());
+    utility::ostringstream_t ccfKeyStream;
+    ccfKeyStream << std::hex;
     for (int i = 0; i < ccfKey.size(); i++)
     {
-        LOG_INFO("%02x ", ccfKey[i]);
+        ccfKeyStream << std::setfill(L'0') << std::setw(2) << (int)ccfKey[i] << ' ';
     }
-    LOG_INFO(L"\n");
+    LOG_INFO(L"ccf-released key: \n%ws", ccfKeyStream.str().c_str());
 
     RETURN_IF_FAILED(CreateResponse(userData, userDataBufferSize, ResponseBuffer, WrittenSize));
     return S_OK;
@@ -481,6 +484,7 @@ Return Value:
 {
     RETURN_HR_IF(E_INVALIDARG, ReportSize < sizeof(ATTESTATION_REPORT));
 
+    LOG_INFO(L"RequestType is %d", ((ATTESTATION_REPORT*)Report)->HclData.RequestType);
     if (((ATTESTATION_REPORT *)Report)->HclData.RequestType == KeyReleaseRequest)
     {
         return IGVmKeyReleaseRequest(Report, ReportSize, AttestationURI, AttestationURISize, ResponseBuffer, WrittenSize);

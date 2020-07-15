@@ -21,17 +21,18 @@ HRESULT
 RpcIGVmAttest(
     /* [in] */ handle_t BindingHandle,
     /* [in] */ GUID VmId,
-    /* [in, range(0, 512)] */ __RPC__in_range(0, 512) UINT32 KeyURISize,
-    /* [in,  ref, size_is(URISize)] */ __RPC__in_ecount_full(KeyURISize) BYTE* KeyURI,
+    /* [in,  ref, string] */ __RPC__in_string LPCWSTR VmName,
     /* [in, range(0, 512)] */ __RPC__in_range(0, 512) UINT32 AttestationURISize,
     /* [in,  ref, size_is(URISize)] */ __RPC__in_ecount_full(KeyURISize) BYTE* AttestationURI,
+    /* [in, range(0, 512)] */ __RPC__in_range(0, 512) UINT32 KeyURISize,
+    /* [in,  ref, size_is(URISize)] */ __RPC__in_ecount_full(KeyURISize) BYTE* KeyURI,
     /* [in, range(0, 4096)] */ __RPC__in_range(0, 4096) UINT32 ReportSize,
     /* [in,  ref, size_is(ReportSize)] */ __RPC__in_ecount_full(ReportSize) BYTE* Report,
     /* [in, range(0, 4096)] */ __RPC__in_range(0, 4096) UINT32 ResponseBufferSize,
     /* [out] */ __RPC__out UINT32* ResponseWrittenSize,
     /* [out, ref, size_is(ResponseBufferSize), length_is(*ResponseWrittenSize)] */
     __RPC__out_ecount_part(ResponseBufferSize, *ResponseWrittenSize) BYTE* Response
-)
+    )
 /*++
 
 Routine Description:
@@ -48,13 +49,15 @@ Arguments:
 
     VmId - Corresponds to VmUniqueId and VM BIOS GUID.
 
-    KeyURISize - Size of Key URI.
-
-    KeyURI - URI that defines requested resource for key release.
+    VmName - VmName.
 
     AttestationURISize - Size of Attestation URI.
 
     AttestationKeyURI - URI that defines requested resource for attestation.
+
+    KeyURISize - Size of Key URI.
+
+    KeyURI - URI that defines requested resource for key release.
 
     ReportSize - Size of attestation report.
 
@@ -79,5 +82,6 @@ Return Value:
     UNREFERENCED_PARAMETER(KeyURISize);
     UNREFERENCED_PARAMETER(KeyURI);
 
+    LOG_INFO(L"VmName is %ws", VmName);
     return g_IGVmAgent.IGVmAttest(Report, ReportSize, AttestationURI, AttestationURISize, { Response, Response + ResponseBufferSize }, ResponseWrittenSize);
 }

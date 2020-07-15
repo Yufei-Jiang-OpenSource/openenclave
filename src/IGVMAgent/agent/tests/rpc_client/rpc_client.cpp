@@ -13,6 +13,7 @@ const char *REPORT_FILE = "./data/snp_report_mem.bin";
 
 int call_remote_function(
     GUID VmId,
+    LPCWSTR VmName,
     UINT32 KeyURISize,
     BYTE *KeyURI,
     UINT32 AttestationURISize,
@@ -47,10 +48,11 @@ int call_remote_function(
         RpcIGVmAttest(
             hRpcBinding,
             VmId,
-            KeyURISize,
-            KeyURI,
+            VmName,
             AttestationURISize,
             AttestationURI,
+            KeyURISize,
+            KeyURI,
             ReportSize,
             Report,
             ResponseBufferSize,
@@ -101,12 +103,16 @@ void main()
     BYTE Response[RESPONSE_BUFFER_SIZE];
     memset(Response, 0, RESPONSE_BUFFER_SIZE);
 
+    ATTESTATION_REPORT* report = (ATTESTATION_REPORT*)report_block;
+    AGENT_TEST(report->HclData.ReportType == SnpVmReport);
+
     int status = call_remote_function(
         dummy_vmid,
+        L"dummy_vm_name",
+        (UINT32)strlen(attestation_uri),
+        (BYTE*)attestation_uri,
         (UINT32)strlen(key_uri),
         (BYTE *)key_uri,
-        (UINT32)strlen(attestation_uri),
-        (BYTE *)attestation_uri,
         (UINT32)report_size,
         (BYTE *)report_block,
         RESPONSE_BUFFER_SIZE,
