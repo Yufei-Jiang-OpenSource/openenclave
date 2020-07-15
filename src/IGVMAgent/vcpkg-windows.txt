@@ -1,0 +1,5 @@
+wil
+ms-gsl
+cpprestsdk
+--triplet
+x64-windows

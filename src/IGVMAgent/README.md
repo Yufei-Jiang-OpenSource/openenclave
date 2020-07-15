@@ -1,6 +1,6 @@
 # Clone repository
 ```
-git clone --recurse-submodules https://sewong.visualstudio.com/DefaultCollection/IGVMAgent/_git/IGVMAgent
+git clone --recurse-submodules <Repo uri>
 ```
 
 # Install Dependencies

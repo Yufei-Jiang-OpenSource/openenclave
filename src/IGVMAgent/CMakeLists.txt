@@ -15,7 +15,6 @@ set (AGENT_DIR ${ROOT_DIR}/agent)
 
 add_compile_options("/std:c++17")
 add_compile_definitions(
-	CMAKE_TOOLCHAIN_FILE=${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
 	_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 )
 add_subdirectory(idl)

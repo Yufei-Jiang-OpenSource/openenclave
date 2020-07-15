@@ -3,11 +3,7 @@
 
 cmake_minimum_required (VERSION 3.8)
 
-add_compile_definitions(
-    CMAKE_TOOLCHAIN_FILE=${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake
-)
-
-find_package(Microsoft.GSL CONFIG)
+find_package(Microsoft.GSL CONFIG REQUIRED)
 find_package(cpprestsdk CONFIG REQUIRED)
 
 # Add source to this project's executable.
