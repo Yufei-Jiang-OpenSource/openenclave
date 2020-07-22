@@ -193,21 +193,25 @@ Return Values:
 
 --*/
 {
-    UINT32 reportSize = sizeof(HW_ATTESTATION);
+    UINT32 userDataOffset = sizeof(ATTESTATION_HEADER) + sizeof(HW_ATTESTATION);
 
     // Set offset and size for User Data
-    UserData = (BYTE *)(ReportBuffer + reportSize);
-    UserDataBufferSize = ReportBufferSize - reportSize;
+    UserData = (BYTE *)(ReportBuffer + userDataOffset);
+    UserDataBufferSize = ReportBufferSize - userDataOffset;
 
     return S_OK;
 }
 
 HRESULT
 IGVmAgent::CreateResponse(
-    _In_ IGVM_REQUEST_DATA* UserData,
+   _In_ IGVM_REQUEST_DATA*  UserData,
                     UINT32  UserDataBufferSize,
-            gsl::span<BYTE> ResponseBuffer,
-                    UINT32* WrittenSize
+                    UINT8*  EncryptedTransportKey,
+                    UINT32  EncryptedTransportKeySize,
+                    UINT8*  WrappedReleasedKey,
+                    UINT32  WrappedReleasedKeySize,
+           gsl::span<BYTE>  ResponseBuffer,
+                   UINT32*  WrittenSize
     )
 /*++
 
@@ -255,7 +259,9 @@ Return Values:
     //
 
     RtlZeroMemory(ResponseBuffer.data(), ResponseBuffer.size());
-    RETURN_HR_IF(E_INVALIDARG, ResponseBuffer.size() < sizeof(IGVM_KEY_MESSAGE_HEADER));
+    RETURN_HR_IF(E_INVALIDARG,
+        (ResponseBuffer.size() < sizeof(IGVM_KEY_MESSAGE_HEADER)) ||
+        (ResponseBuffer.size() < sizeof(IGVM_KEY_MESSAGE_HEADER) + EncryptedTransportKeySize + WrappedReleasedKeySize));
 
     //
     // Any failure path from here onwards needs to set hr, to clear ResponseBuffer on error
@@ -265,7 +271,18 @@ Return Values:
     payloadHeader->Version = IGVM_KEY_MESSAGE_HEADER_VERSION_1;
     offset = FIELD_OFFSET(IGVM_KEY_MESSAGE_HEADER, Payload);
 
-    payloadHeader->DataSize = 0;
+    memcpy(&ResponseBuffer[offset], EncryptedTransportKey, EncryptedTransportKeySize);
+    payloadHeader->EncryptedTransportKeyLength = EncryptedTransportKeySize;
+    payloadHeader->EncryptedTransportKeyOffset = offset;
+    offset += EncryptedTransportKeySize;
+
+    memcpy(&ResponseBuffer[offset], WrappedReleasedKey, WrappedReleasedKeySize);
+    payloadHeader->EncryptedKeyArrayLength = WrappedReleasedKeySize;
+    payloadHeader->EncryptedKeyArrayOffset = offset;
+    offset += WrappedReleasedKeySize;
+
+    payloadHeader->DataSize = offset;
+    *WrittenSize = offset;
 
     return S_OK;
 }
@@ -404,13 +421,21 @@ Return Value:
     LOG_INFO(L"ccf-released key size: \n%d", ccfKey.size());
     utility::ostringstream_t ccfKeyStream;
     ccfKeyStream << std::hex;
-    for (int i = 0; i < ccfKey.size(); i++)
+    for (UINT32 i = 0; i < ccfKey.size(); i++)
     {
         ccfKeyStream << std::setfill(L'0') << std::setw(2) << (int)ccfKey[i] << ' ';
     }
     LOG_INFO(L"ccf-released key: \n%ws", ccfKeyStream.str().c_str());
 
-    RETURN_IF_FAILED(CreateResponse(userData, userDataBufferSize, ResponseBuffer, WrittenSize));
+    // TODO: Temporarily pass in asymmetric key in HCL data and the raw key released by SKR to create response without key wrapping.
+    RETURN_IF_FAILED(CreateResponse(userData, 
+                                    userDataBufferSize, 
+                                    ((ATTESTATION_REPORT*)Report)->HclData.KeyData,
+                                    ((ATTESTATION_REPORT*)Report)->HclData.KeyDataSize,
+                                    ccfKey.data(),
+                                    ccfKey.size(),
+                                    ResponseBuffer, 
+                                    WrittenSize));
     return S_OK;
 }
 

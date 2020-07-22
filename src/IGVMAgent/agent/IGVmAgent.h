@@ -81,10 +81,14 @@ private:
 
     HRESULT
     CreateResponse(
-        _In_ IGVM_REQUEST_DATA* UserData,
+       _In_ IGVM_REQUEST_DATA*  UserData,
                         UINT32  UserDataBufferSize,
-                gsl::span<BYTE> ResponseBuffer,
-                        UINT32* WrittenSize
+                        UINT8*  EncryptedTransportKey,
+                        UINT32  EncryptedTransportKeySize,
+                        UINT8*  WrappedReleasedKey,
+                        UINT32  WrappedReleasedKeySize,
+               gsl::span<BYTE>  ResponseBuffer,
+                       UINT32*  WrittenSize
         );
 
    bool m_IGVmAgentIfRegistered = false;

@@ -4,10 +4,14 @@
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 using namespace std;
 using namespace agent;
 
+const UINT32 EXPECTED_HCL_DATA_SIZE = 303;
+const UINT32 EXPECTED_VERSION = 1;
+const UINT32 EXPECTED_TOTAL_SIZE = 339; 
 const UINT32 RESPONSE_BUFFER_SIZE = 4096;
 const char *REPORT_FILE = "./data/snp_report_mem.bin";
 
@@ -65,7 +69,7 @@ int call_remote_function(
     }
     RpcEndExcept
 
-        status = RpcStringFreeW(&szStringBinding);
+    status = RpcStringFreeW(&szStringBinding);
     if (status)
         exit(status);
 
@@ -105,6 +109,8 @@ void main()
 
     ATTESTATION_REPORT* report = (ATTESTATION_REPORT*)report_block;
     AGENT_TEST(report->HclData.ReportType == SnpVmReport);
+    AGENT_TEST(report->Header.ReportSize == sizeof(ATTESTATION_HEADER) + sizeof(HW_ATTESTATION) + EXPECTED_HCL_DATA_SIZE);
+    AGENT_TEST(report->HclData.DataSize == EXPECTED_HCL_DATA_SIZE);
 
     int status = call_remote_function(
         dummy_vmid,
@@ -119,6 +125,25 @@ void main()
         &ResponseWrittenSize,
         Response);
     AGENT_TEST(status == 0);
+
+    IGVM_KEY_MESSAGE_HEADER* payloadHeader = (IGVM_KEY_MESSAGE_HEADER*)Response;
+    LOG_INFO("IGVM_KEY_MESSAGE_HEADER Data: %d", payloadHeader->DataSize);
+    LOG_INFO("IGVM_KEY_MESSAGE_HEADER Version: %d", payloadHeader->Version);
+    LOG_INFO("IGVM_KEY_MESSAGE_HEADER EncryptedTransportKeyOffset: %d", payloadHeader->EncryptedTransportKeyOffset);
+    LOG_INFO("IGVM_KEY_MESSAGE_HEADER EncryptedTransportKeyLength: %d", payloadHeader->EncryptedTransportKeyLength);
+    LOG_INFO("IGVM_KEY_MESSAGE_HEADER EncryptedKeyArrayOffset: %d", payloadHeader->EncryptedKeyArrayOffset);
+    LOG_INFO("IGVM_KEY_MESSAGE_HEADER EncryptedKeyArrayLength: %d", payloadHeader->EncryptedKeyArrayLength);
+    LOG_INFO("ResponseWrittenSize: %d", ResponseWrittenSize);
+    AGENT_TEST(payloadHeader->Version == EXPECTED_VERSION);
+    AGENT_TEST(payloadHeader->DataSize == EXPECTED_TOTAL_SIZE);
+
+    utility::ostringstream_t ccfKeyStream;
+    ccfKeyStream << std::hex;
+    for (UINT32 i = 0; i < payloadHeader->EncryptedKeyArrayLength; i++)
+    {
+        ccfKeyStream << std::setfill(L'0') << std::setw(2) << (int)Response[payloadHeader->EncryptedKeyArrayOffset+i] << ' ';
+    }
+    LOG_INFO(L"ccf-released key: \n%ws", ccfKeyStream.str().c_str());
 
     if (report_block)
     {
